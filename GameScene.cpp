@@ -67,7 +67,7 @@ void GameScene::Initialize() {
 	for (uint32_t i = 0; i < 2; i++) {
 	
 		Enemy* newEnemy = new Enemy();
-		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(6 + i, 18);
+		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(20 + i, 18);
 		newEnemy->Initialize(Enemymodel_, &camera_, enemyPosition);
 
 		enemies_.push_back(newEnemy);
@@ -166,14 +166,18 @@ void GameScene::Draw() {
 		enemy->Draw();
 	}
 	skydome_->Draw();
-	// 3Dモデル描画後処理
-	Model::PostDraw();
-
-	ChecAllCollisions();
 
 	if (deathParticles_) {
 		deathParticles_->Draw();
 	}
+
+	// 3Dモデル描画後処理
+
+	Model::PostDraw();
+
+	ChecAllCollisions();
+
+	
 }
 
 GameScene::~GameScene() {
