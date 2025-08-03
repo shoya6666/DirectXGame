@@ -10,6 +10,14 @@
 
 class GameScene {
 public:
+
+	enum class Phase {
+		kPlay,
+		kDeath,
+	};
+
+	Phase phase_;
+
 	// 初期化
 	void Initialize();
 
@@ -25,7 +33,12 @@ public:
 
 	void ChecAllCollisions();
 
+	void ChangePhase();
+
 	DeathParticles* deathParticles_ = nullptr;
+
+		// 終了フラグのgetter
+	bool IsFinished() const { return finished_; }
 
 private:
 	// テクスチャハンドル
@@ -68,4 +81,8 @@ private:
 	MapChipField* mapChipField_;
 	//カメラコントローラー
 	CameraController* cameraController_ = nullptr;
+	
+	// 終了フラグ（変数名に注意）
+	bool finished_ = false;
+
 };

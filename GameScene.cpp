@@ -1,7 +1,6 @@
 #include "GameScene.h"
 #include "MyMath.h"
 
-
 using namespace KamataEngine;
 
 void GameScene::Initialize() {
@@ -10,14 +9,13 @@ void GameScene::Initialize() {
 	// model_ = Model::Create();
 	model_ = Model::CreateFromOBJ("player");
 	Enemymodel_ = Model::CreateFromOBJ("enemy");
-	modelParticles_ = Model::CreateFromOBJ("deathParticle");
 	// ワールドトランスフォーム
 	worldTransform_.Initialize();
 	// カメラの初期化
 	camera_.Initialize();
 	// 自キャラの生成
 	player_ = new Player();
-	
+
 	// 3Dモデルデータの生成
 	modelBlock_ = Model::CreateFromOBJ("block");
 	//
@@ -52,7 +50,7 @@ void GameScene::Initialize() {
 	// 自キャラの初期化
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(2, 18);
 	player_->Initialize(model_, &camera_, playerPosition);
-	
+
 	// カメラコントローラの生成
 	cameraController_ = new CameraController();
 	cameraController_->Initialize();
@@ -65,7 +63,7 @@ void GameScene::Initialize() {
 	player_->SetMapChipField(mapChipField_);
 	// 敵の初期化
 	for (uint32_t i = 0; i < 2; i++) {
-	
+
 		Enemy* newEnemy = new Enemy();
 		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(20 + i, 18);
 		newEnemy->Initialize(Enemymodel_, &camera_, enemyPosition);
@@ -73,9 +71,7 @@ void GameScene::Initialize() {
 		enemies_.push_back(newEnemy);
 	}
 
-	//後で消す
-	deathParticles_ = new DeathParticles;
-	deathParticles_->Initialize(modelParticles_, &camera_, playerPosition);
+	phase_ = Phase::kPlay;
 }
 
 void GameScene::Update() {
@@ -101,7 +97,7 @@ void GameScene::Update() {
 	// ImGui::ShowDemoWindow();
 #endif
 	debugCamera_->Update();
-	player_->Update();
+	
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
@@ -135,16 +131,29 @@ void GameScene::Update() {
 		camera_.TransferMatrix();
 	}
 	skydome_->Update();
-	cameraController_->Update();
+
 	for (Enemy* enemy : enemies_) {
 		enemy->Update();
 	}
-	ChecAllCollisions();
 
-	if (deathParticles_) {
-		deathParticles_->Update();
+	switch (phase_) {
+	case Phase::kPlay:
+
+		player_->Update();
+		cameraController_->Update();
+		ChecAllCollisions();
+		ChangePhase();
+
+		break;
+	case Phase::kDeath:
+
+		if (deathParticles_) {
+			deathParticles_->Update();
+		}
+		ChangePhase();
+
+		break;
 	}
-	
 }
 
 void GameScene::Draw() {
@@ -153,7 +162,9 @@ void GameScene::Draw() {
 	Model::PreDraw();
 
 	// 3Dモデル描画
-	player_->Draw();
+	if (!player_->IsDead()) {
+		player_->Draw();
+	}
 	for (std::vector<WorldTransform*>& worldTransformBlockkLine : worldTransformBlocks_) {
 		for (WorldTransform* worldTransformBlock : worldTransformBlockkLine) {
 			if (!worldTransformBlock) {
@@ -176,8 +187,6 @@ void GameScene::Draw() {
 	Model::PostDraw();
 
 	ChecAllCollisions();
-
-	
 }
 
 GameScene::~GameScene() {
@@ -235,25 +244,53 @@ void GameScene::GenerateBlocks() {
 void GameScene::ChecAllCollisions() {
 
 	{
-		//判定対象1と2の座標
+		// 判定対象1と2の座標
 		AABB aabb1, aabb2;
 
-		//自キャラの座標
+		// 自キャラの座標
 		aabb1 = player_->GetAABB();
 
-		//自キャラと敵弾すべての当たり判定
+		// 自キャラと敵弾すべての当たり判定
 		for (Enemy* enemy : enemies_) {
-			//敵弾の座標
+			// 敵弾の座標
 			aabb2 = enemy->GetAABB();
 
-			//AABB同士の交差判定
+			// AABB同士の交差判定
 			if (IsCollision(aabb1, aabb2)) {
-				//自キャラの衝突時関数を呼び出す
+				// 自キャラの衝突時関数を呼び出す
 				player_->OnCollision(enemy);
-				//敵の衝突時関数を呼び出す
+				// 敵の衝突時関数を呼び出す
 				enemy->OnCollision(player_);
 			}
 		}
+	}
+}
+
+void GameScene::ChangePhase() {
+
+	switch (phase_) {
+	case Phase::kPlay:
+
+		if (player_->IsDead()) {
+			//死亡演出フェーズに切り替え
+			phase_ = Phase::kDeath;
+			//自キャラの座標を取得
+			const Vector3& deathParticlesPosition = player_->GetWorldPosition();
+
+			
+			modelParticles_ = Model::CreateFromOBJ("deathParticle");
+			deathParticles_ = new DeathParticles;
+			deathParticles_->Initialize(modelParticles_, &camera_, deathParticlesPosition);
+		}
+
+		break;
+	case Phase::kDeath:
+
+		if (deathParticles_ && deathParticles_->IsFinished()) {
+			finished_ = true;
+		}
+
+		break;
 	}
 
 }

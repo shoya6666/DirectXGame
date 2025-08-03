@@ -57,6 +57,9 @@ public:
 
 	bool onGround_ = true;
 
+
+	bool IsDead() const { return isDead_; }
+
 	static inline const float kGravityAcceleration = 0.1f;
 
 	static inline const float kLimitFallSpeed = 0.3f;
@@ -137,4 +140,7 @@ private:
 
 	// マップチップによるフィールド
 	MapChipField* mapChipField_ = nullptr;
+
+	bool isDead_ = false;
+
 };

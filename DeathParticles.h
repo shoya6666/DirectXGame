@@ -22,7 +22,7 @@ public:
 	std::array<KamataEngine::WorldTransform, kNumParticles> worldTransforms_;
 
 	//終了フラグ
-	bool isFinished_ = false;
+	bool IsFinished() const { return isFinished_; }
 	//経過時間カウント
 	float counter_ = 0.0f;
 
@@ -38,4 +38,7 @@ private:
 	KamataEngine::Model* model_ = nullptr;
 
 	KamataEngine::Camera* camera_ = nullptr;
+
+	// 終了フラグ
+	bool isFinished_ = false;
 };
