@@ -24,19 +24,17 @@ public:
 
 	Rect movableArea_ = {0, 100, 0, 100};
 
-	void SetMovableArea(Rect area) {
-		movableArea_ = area;
-	}
+	void SetMovableArea(Rect area) { movableArea_ = area; }
 
 private:
 	// ワールド変換データ
-	KamataEngine::WorldTransform worldTransform_;
+	KamataEngine::WorldTransform worldTransform;
 
 	KamataEngine::Camera camera_;
 
 	Player* target_ = nullptr;
 
-	KamataEngine::Vector3 targetOffset_ = {0, 0, -15.0f};
+	KamataEngine::Vector3 targetOffset = {0, 0, -15.0f};
 
 	KamataEngine::Vector3 targetPosition_;
 

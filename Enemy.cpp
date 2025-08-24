@@ -1,17 +1,14 @@
 #define NOMINMAX
 #include "Enemy.h"
-#include "MyMath.h"
-#include "MapChipField.h"
-#include <algorithm>
 #include <cassert>
+#include "MeMath.h"
 #include <numbers>
-
+#include <algorithm>
 
 using namespace KamataEngine;
 using namespace MathUtility;
 
-void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position)
-{
+void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position) {
 	assert(model);
 	assert(camera);
 
@@ -23,35 +20,38 @@ void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera,
 
 	velocity_ = {-kWalkSpeed, 0, 0};
 
-	walkTime_ = 0.0f;
+	walkTimer_ = 0.0f;
+
 
 }
+
+Enemy::~Enemy() {}
 
 void Enemy::Update() {
 
 	worldTransform_.translation_.x -= kWalkSpeed;
 
-	// アフィン変換
-	// アフィン変換行列の作成
-	worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
+	//タイマーを加算
+	walkTimer_ += 1.0f / 60.0f;
 
-	// 行列を定数バッファに転送
-	worldTransform_.TransferMatrix();
-
-	walkTime_ += 1.0f / 60.0f;
-
-	float param = std::sin((2*PI)*walkTime_/kWalkMotionTime);
+	//回転アニメーション
+	float param = std::sin((2 * PI) * walkTimer_ / kWalkMotionTime);
 	float degree = kWalkMotionAngleStart + kWalkMotionAngleEnd * (param + 1.0f) / 2.0f;
 	worldTransform_.rotation_.x = std::sin(degree);
 
+	// 行列更新
+	//   アフィン変換行列の作成
+	worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
+	// 定数バッファに転送する
+	worldTransform_.TransferMatrix();
 }
 
 void Enemy::Draw() { model_->Draw(worldTransform_, *camera_); }
 
-Vector3 Enemy::GetWorldPosition() {
-
+KamataEngine::Vector3 Enemy::GetWorldPosition() {
+	// ワールド座標を入れる変数
 	Vector3 worldPos;
-
+	// ワールド行列の平行移動成分を取得
 	worldPos.x = worldTransform_.matWorld_.m[3][0];
 	worldPos.y = worldTransform_.matWorld_.m[3][1];
 	worldPos.z = worldTransform_.matWorld_.m[3][2];
@@ -59,8 +59,7 @@ Vector3 Enemy::GetWorldPosition() {
 	return worldPos;
 }
 
-
-AABB Enemy::GetAABB() {
+AABB Enemy::GetAABB() { 
 
 	Vector3 worldPos = GetWorldPosition();
 
@@ -72,4 +71,7 @@ AABB Enemy::GetAABB() {
 	return aabb;
 }
 
-void Enemy::OnCollision(const Player* player) { (void)player; }
+// 衝突応答
+void Enemy::OnCollision(const Player* player) { 
+	(void)player;
+}
